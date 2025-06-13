@@ -7,6 +7,7 @@ const InvoiceKeyInput = ({ onRefresh }) => {
   const [resultados, setResultados] = useState([]);
   const [mensagem, setMensagem] = useState('');
   const [loading, setLoading] = useState(false);
+  const [receivingIds, setReceivingIds] = useState(new Set());
   
   const handleKeyPress = async (e) => {
     if (e.key === 'Enter') {
@@ -35,6 +36,9 @@ const InvoiceKeyInput = ({ onRefresh }) => {
   };
   
   const handleReceberNota = async (id, agendamento) => {
+    // Adiciona o ID ao conjunto de IDs sendo processados
+    setReceivingIds(prev => new Set(prev).add(id));
+    
     try {
       // Verificar se é uma chave de acesso (44 dígitos) e se o agendamento ainda não tem chave
       if (chaveAcesso.length === 44 && /^\d+$/.test(chaveAcesso) && 
@@ -62,6 +66,13 @@ const InvoiceKeyInput = ({ onRefresh }) => {
     } catch (error) {
       console.error('Erro ao receber nota:', error);
       setMensagem(`Erro ao receber nota: ${error.message}`);
+    } finally {
+      // Remove o ID do conjunto de IDs sendo processados
+      setReceivingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     }
   };
   
@@ -90,8 +101,18 @@ const InvoiceKeyInput = ({ onRefresh }) => {
                 <span>NF: {item.numeroNF}</span>
                 <span>Cliente: {item.cliente.nome}</span>
                 <span>Data: {formatarData(item.data)}</span>
-                <button onClick={() => handleReceberNota(item.id, item)}>
-                  Receber
+                <button 
+                  onClick={() => handleReceberNota(item.id, item)}
+                  disabled={receivingIds.has(item.id)}
+                >
+                  {receivingIds.has(item.id) ? (
+                    <>
+                      <span className="loading-spinner"></span>
+                      Recebendo...
+                    </>
+                  ) : (
+                    'Receber'
+                  )}
                 </button>
               </li>
             ))}

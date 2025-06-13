@@ -11,6 +11,12 @@ const LeituraPage = () => {
   const [agendamentos, setAgendamentos] = useState([]);
   const [filteredAgendamentos, setFilteredAgendamentos] = useState([]);
   const [searchResults, setSearchResults] = useState(null);
+  
+  // Debug: log whenever filteredAgendamentos changes
+  useEffect(() => {
+    console.log('LeituraPage: filteredAgendamentos mudou:', filteredAgendamentos);
+    console.log('LeituraPage: Número de agendamentos filtrados:', filteredAgendamentos.length);
+  }, [filteredAgendamentos]);
   const [loading, setLoading] = useState(false);
   const [totalVolumes, setTotalVolumes] = useState(0);
   const [selectedAgendamento, setSelectedAgendamento] = useState(null);
@@ -89,23 +95,36 @@ const LeituraPage = () => {
   };
   
   const handleSearchResults = (resultados) => {
-    setSearchResults(resultados.length > 0 ? resultados : null);
+    console.log('LeituraPage: Recebendo resultados da busca:', resultados);
+    console.log('LeituraPage: Número de resultados:', resultados.length);
+    
+    // Sempre define searchResults, mesmo se vazio (para mostrar que uma busca foi realizada)
+    setSearchResults(resultados);
     
     if (resultados.length > 0) {
+      console.log('LeituraPage: Definindo filteredAgendamentos com resultados da busca');
       setFilteredAgendamentos(resultados);
     } else {
-      // Se a busca não retornou resultados, volta para os filtros normais
-      if (agendamentos.length > 0) {
-        const hoje = new Date();
-        const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        applyDefaultFilters(agendamentos, primeiroDiaDoMes, hoje);
-      } else {
-        fetchAgendamentos();
-      }
+      console.log('LeituraPage: Nenhum resultado encontrado, limpando lista');
+      // Se a busca não retornou resultados, mostra lista vazia
+      setFilteredAgendamentos([]);
     }
   };
   
+  const clearSearch = () => {
+    console.log('LeituraPage: Limpando busca');
+    setSearchResults(null);
+    
+    // Aplica filtros aos agendamentos gerais quando limpa a busca
+    const hoje = new Date();
+    const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    applyDefaultFilters(agendamentos, primeiroDiaDoMes, hoje);
+  };
+  
   const handleFilter = useCallback((filtros) => {
+    console.log('LeituraPage: handleFilter chamado com filtros:', filtros);
+    console.log('LeituraPage: searchResults atual:', searchResults);
+    
     let resultado = searchResults ? [...searchResults] : [...agendamentos];
     
     // Aplica filtros
@@ -170,8 +189,19 @@ const LeituraPage = () => {
         break;
     }
     
+    console.log('LeituraPage: Resultado do filtro:', resultado);
     setFilteredAgendamentos(resultado);
   }, [agendamentos, searchResults]);
+  
+  // Versão do handleFilter que não deve ser executada quando há searchResults
+  const handleFilterWithSearchCheck = useCallback((filtros) => {
+    // Se há resultados de busca, não aplica filtros automáticos
+    if (searchResults !== null) {
+      console.log('LeituraPage: Ignorando filtro automático porque há resultados de busca');
+      return;
+    }
+    handleFilter(filtros);
+  }, [handleFilter, searchResults]);
   
   const handleRowClick = (agendamento) => {
     setSelectedAgendamento(agendamento);
@@ -187,7 +217,7 @@ const LeituraPage = () => {
       
       <SearchInput onSearchResults={handleSearchResults} />
       
-      <FilterControls onFilter={handleFilter} />
+      <FilterControls onFilter={handleFilterWithSearchCheck} />
       
       <div className="total-volumes-info">
         <p>Volumetria total: <strong>{totalVolumes}</strong></p>
@@ -196,13 +226,7 @@ const LeituraPage = () => {
       {searchResults !== null && (
         <div className="search-info">
           <p>Exibindo resultados da busca ({filteredAgendamentos.length})</p>
-          <button onClick={() => {
-            setSearchResults(null);
-            // Aplica filtros aos agendamentos gerais quando limpa a busca
-            const hoje = new Date();
-            const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-            applyDefaultFilters(agendamentos, primeiroDiaDoMes, hoje);
-          }}>
+          <button onClick={clearSearch}>
             Limpar busca
           </button>
         </div>
@@ -213,6 +237,24 @@ const LeituraPage = () => {
         loading={loading}
         onRowClick={handleRowClick}
       />
+      
+      {/* Debug info */}
+      <div style={{ 
+        position: 'fixed', 
+        bottom: '10px', 
+        right: '10px', 
+        background: 'rgba(0,0,0,0.8)', 
+        color: 'white', 
+        padding: '10px', 
+        fontSize: '12px',
+        borderRadius: '4px',
+        maxWidth: '300px'
+      }}>
+        <div>Total agendamentos: {agendamentos.length}</div>
+        <div>Agendamentos filtrados: {filteredAgendamentos.length}</div>
+        <div>Search results: {searchResults ? searchResults.length : 'null'}</div>
+        <div>Loading: {loading ? 'true' : 'false'}</div>
+      </div>
 
       {selectedAgendamento && (
         <InvoiceDetailsModal
@@ -221,6 +263,7 @@ const LeituraPage = () => {
           agendamento={selectedAgendamento}
           onRefresh={fetchAgendamentos}
           isLeitura={true}
+          showStatusChange={true}
         />
       )}
     </div>

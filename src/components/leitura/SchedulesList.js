@@ -2,11 +2,17 @@ import React from 'react';
 import { formatarData } from '../../utils/nfUtils';
 
 const SchedulesList = ({ agendamentos, loading, onRowClick }) => {
+  console.log('SchedulesList: Recebendo agendamentos:', agendamentos);
+  console.log('SchedulesList: Loading status:', loading);
+  console.log('SchedulesList: Número de agendamentos:', agendamentos?.length || 0);
+  
   if (loading) {
+    console.log('SchedulesList: Mostrando loading...');
     return <p>Carregando...</p>;
   }
   
   if (agendamentos.length === 0) {
+    console.log('SchedulesList: Mostrando mensagem de nenhum agendamento...');
     return <p>Nenhum agendamento encontrado</p>;
   }
 

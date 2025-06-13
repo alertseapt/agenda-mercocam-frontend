@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getAgendamentos, updateAgendamentoStatus } from '../../services/api';
 import { formatarData, timestampToDate } from '../../utils/nfUtils';
+import InvoiceDetailsModal from '../administrativo/InvoiceDetailsModal';
 
 const ToBePalletizedList = ({ refresh, onRefresh }) => {
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedAgendamento, setSelectedAgendamento] = useState(null);
   
   useEffect(() => {
     fetchAgendamentos();
@@ -48,6 +50,14 @@ const ToBePalletizedList = ({ refresh, onRefresh }) => {
       console.error('Erro ao atualizar status:', error);
       alert('Erro ao atualizar status');
     }
+  };
+
+  const handleItemClick = (item) => {
+    setSelectedAgendamento(item);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedAgendamento(null);
   };
   
   if (loading) {
@@ -101,7 +111,13 @@ const ToBePalletizedList = ({ refresh, onRefresh }) => {
                 border: '1px solid #e0e0e0'
               }}
             >
-              <div>NF: {item.numeroNF}</div>
+              <div 
+                className="clickable" 
+                onClick={() => handleItemClick(item)}
+                style={{ cursor: 'pointer', color: '#007bff' }}
+              >
+                NF: {item.numeroNF}
+              </div>
               <div>{item.cliente.nome}</div>
               <div>VOL: {item.volumes}</div>
               <div>
@@ -123,6 +139,14 @@ const ToBePalletizedList = ({ refresh, onRefresh }) => {
             </div>
           ))}
         </div>
+      )}
+      
+      {selectedAgendamento && (
+        <InvoiceDetailsModal
+          agendamento={selectedAgendamento}
+          onClose={handleCloseDetails}
+          onRefresh={fetchAgendamentos}
+        />
       )}
     </div>
   );

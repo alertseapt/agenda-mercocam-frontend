@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { formatarData, formatarDataHora } from '../../utils/nfUtils';
-import { updateAgendamento, deleteAgendamento, getClientes } from '../../services/api';
+import { updateAgendamento, deleteAgendamento, getClientes, updateAgendamentoStatus } from '../../services/api';
 
-const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh }) => {
+const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh, showStatusChange = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState({
     numeroNF: agendamento?.numeroNF || '',
@@ -14,6 +14,7 @@ const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh }) => {
   const [saving, setSaving] = useState(false);
   const [mensagem, setMensagem] = useState('');
   const [clientes, setClientes] = useState([]);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   
   useEffect(() => {
     if (isEditing) {
@@ -89,6 +90,26 @@ const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh }) => {
         console.error('Erro ao excluir nota fiscal:', error);
         alert('Erro ao excluir nota fiscal');
       }
+    }
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    setUpdatingStatus(true);
+    setMensagem('');
+    
+    try {
+      await updateAgendamentoStatus(agendamento.id, newStatus);
+      setMensagem(`Status alterado para "${newStatus}" com sucesso!`);
+      
+      // Notifica o componente pai para atualizar a lista
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      setMensagem('Erro ao atualizar status');
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -212,7 +233,14 @@ const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh }) => {
                 onClick={handleSaveChanges}
                 disabled={saving}
               >
-                {saving ? 'Salvando...' : 'Salvar Alterações'}
+                {saving ? (
+                  <>
+                    <span className="loading-spinner"></span>
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar Alterações'
+                )}
               </button>
               
               {mensagem && <p className="mensagem">{mensagem}</p>}
@@ -262,6 +290,98 @@ const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh }) => {
                 <span className="label">Observações:</span>
                 <span className="value">{agendamento.observacoes || '-'}</span>
               </div>
+              
+              {showStatusChange && !isEditing && (
+                <div className="status-change-section">
+                  <h4>Alterar Status</h4>
+                  <div className="status-buttons">
+                    <button 
+                      className="status-button recebido"
+                      onClick={() => handleStatusChange('recebido')}
+                      disabled={updatingStatus || agendamento.status === 'recebido'}
+                    >
+                      {updatingStatus ? (
+                        <>
+                          <span className="loading-spinner"></span>
+                          Atualizando...
+                        </>
+                      ) : (
+                        'Recebido'
+                      )}
+                    </button>
+                    <button 
+                      className="status-button informado"
+                      onClick={() => handleStatusChange('informado')}
+                      disabled={updatingStatus || agendamento.status === 'informado'}
+                    >
+                      {updatingStatus ? (
+                        <>
+                          <span className="loading-spinner"></span>
+                          Atualizando...
+                        </>
+                      ) : (
+                        'Informado'
+                      )}
+                    </button>
+                    <button 
+                      className="status-button em-tratativa"
+                      onClick={() => handleStatusChange('em tratativa')}
+                      disabled={updatingStatus || agendamento.status === 'em tratativa'}
+                    >
+                      {updatingStatus ? (
+                        <>
+                          <span className="loading-spinner"></span>
+                          Atualizando...
+                        </>
+                      ) : (
+                        'Em Tratativa'
+                      )}
+                    </button>
+                    <button 
+                      className="status-button a-paletizar"
+                      onClick={() => handleStatusChange('a paletizar')}
+                      disabled={updatingStatus || agendamento.status === 'a paletizar'}
+                    >
+                      {updatingStatus ? (
+                        <>
+                          <span className="loading-spinner"></span>
+                          Atualizando...
+                        </>
+                      ) : (
+                        'A Paletizar'
+                      )}
+                    </button>
+                    <button 
+                      className="status-button paletizado"
+                      onClick={() => handleStatusChange('paletizado')}
+                      disabled={updatingStatus || agendamento.status === 'paletizado'}
+                    >
+                      {updatingStatus ? (
+                        <>
+                          <span className="loading-spinner"></span>
+                          Atualizando...
+                        </>
+                      ) : (
+                        'Paletizado'
+                      )}
+                    </button>
+                    <button 
+                      className="status-button fechado"
+                      onClick={() => handleStatusChange('fechado')}
+                      disabled={updatingStatus || agendamento.status === 'fechado'}
+                    >
+                      {updatingStatus ? (
+                        <>
+                          <span className="loading-spinner"></span>
+                          Finalizando...
+                        </>
+                      ) : (
+                        'Finalizar'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
           

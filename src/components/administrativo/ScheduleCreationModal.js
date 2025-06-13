@@ -280,7 +280,14 @@ const ScheduleCreationModal = ({ isOpen, onClose, onRefresh }) => {
                 Cancelar
               </button>
               <button type="submit" disabled={loading} className="confirm-button">
-                {loading ? 'Criando...' : 'Criar Agendamento'}
+                {loading ? (
+                  <>
+                    <span className="loading-spinner"></span>
+                    Criando...
+                  </>
+                ) : (
+                  'Criar Agendamento'
+                )}
               </button>
             </div>
           </form>

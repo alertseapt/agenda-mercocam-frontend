@@ -1,16 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getAgendamentos, updateAgendamentoStatus } from '../../services/api';
 import { formatarData } from '../../utils/nfUtils';
 import InvoiceDetailsModal from './InvoiceDetailsModal';
+import './ProcessingInvoicesList.css';
 
-const ProcessingInvoicesList = ({ refresh, onRefresh }) => {
+const ProcessingInvoicesList = ({ refresh, onRefresh, onSelectionChange, onUpdateStatus }) => {
   const [agendamentos, setAgendamentos] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [selectedAgendamento, setSelectedAgendamento] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
     fetchAgendamentos();
   }, [refresh]);
+  
+  useEffect(() => {
+    // 選択された項目が変更されたときに親コンポーネントに通知
+    if (onSelectionChange) {
+      // 選択されたIDに対応するアジェンダの詳細情報を取得
+      const selectedAgendamentos = agendamentos.filter(agendamento => 
+        selectedItems.includes(agendamento.id)
+      );
+      onSelectionChange(selectedItems, selectedAgendamentos);
+    }
+  }, [selectedItems, agendamentos]); // agendamentosも依存配列に追加
   
   // Função auxiliar para converter timestamp para Date
   const timestampToDate = (timestamp) => {
@@ -57,77 +71,85 @@ const ProcessingInvoicesList = ({ refresh, onRefresh }) => {
     return date && !isNaN(date.getTime());
   };
   
-  const fetchAgendamentos = async () => {
-    setLoading(true);
-    
+  const fetchAgendamentos = useCallback(async () => {
     try {
-      // Busca agendamentos com status "recebido", "informado", "em tratativa", "a paletizar" ou "paletizado"
-      const statusList = ['recebido', 'informado', 'em tratativa', 'a paletizar', 'paletizado'];
+      setLoading(true);
+      const data = await getAgendamentos();
+      // フィルタリング：fechadoとagendadoを除外
+      const filteredData = data.filter(item => 
+        item.status !== 'fechado' && item.status !== 'agendado'
+      );
       
-      const promises = statusList.map(status => getAgendamentos({ status }));
-      const responses = await Promise.all(promises);
-      
-      // Combina todos os resultados
-      const combinedAgendamentos = responses.flat();
-      
-      // Verifica se cada agendamento tem um status de recebimento no histórico
-      const agendamentosComData = combinedAgendamentos.map(agendamento => {
-        const recebido = agendamento.historicoStatus?.find(h => h.status === 'recebido');
-        const dataRecebimento = recebido ? timestampToDate(recebido.timestamp) : null;
-        return {
-          ...agendamento,
-          dataRecebimento
+      // 受領日で並び替え（古い順）
+      const sortedData = filteredData.sort((a, b) => {
+        const getReceivedTimestamp = (item) => {
+          if (!item.historicoStatus || !Array.isArray(item.historicoStatus)) return null;
+          const recebido = item.historicoStatus.find(h => h.status === 'recebido');
+          return recebido ? recebido.timestamp : null;
         };
+        
+        const timestampA = getReceivedTimestamp(a);
+        const timestampB = getReceivedTimestamp(b);
+        
+        // 受領日がない項目は最後に配置
+        if (!timestampA && !timestampB) return 0;
+        if (!timestampA) return 1;
+        if (!timestampB) return -1;
+        
+        // timestampを日付に変換して比較
+        const dateA = timestampToDate(timestampA);
+        const dateB = timestampToDate(timestampB);
+        
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        
+        // 古い日付が先に来るように昇順ソート
+        return dateA.getTime() - dateB.getTime();
       });
       
-      // Filtra agendamentos sem data de recebimento
-      const comDataRecebimento = agendamentosComData.filter(a => isValidDate(a.dataRecebimento));
-      const semDataRecebimento = agendamentosComData.filter(a => !isValidDate(a.dataRecebimento));
-      
-      // Ordena os agendamentos com data de recebimento (mais antigo primeiro)
-      const ordenados = comDataRecebimento.sort((a, b) => {
-        return a.dataRecebimento - b.dataRecebimento;
-      });
-      
-      // Combina os ordenados com os sem data de recebimento
-      const sortedAgendamentos = [...ordenados, ...semDataRecebimento];
-      
-      console.log("Agendamentos ordenados por data de recebimento:");
-      sortedAgendamentos.forEach(a => {
-        if (isValidDate(a.dataRecebimento)) {
-          console.log(`NF: ${a.numeroNF || 'Sem NF'}, Status: ${a.status}, Data recebimento: ${a.dataRecebimento.toLocaleDateString()}`);
-        } else {
-          console.log(`NF: ${a.numeroNF || 'Sem NF'}, Status: ${a.status}, Sem data de recebimento válida`);
-        }
-      });
-      
-      setAgendamentos(sortedAgendamentos);
-    } catch (error) {
-      console.error('Erro ao buscar agendamentos:', error);
+      setAgendamentos(sortedData);
+      setError(null);
+    } catch (err) {
+      setError('Erro ao carregar agendamentos');
+      console.error('Erro:', err);
     } finally {
       setLoading(false);
     }
+  }, []); // 依存関係なし
+  
+  const handleItemClick = (item) => {
+    setSelectedAgendamento(item);
   };
   
-  const handleUpdateStatus = async (id, status) => {
+  const handleItemSelect = (itemId) => {
+    setSelectedItems(prev => {
+      if (prev.includes(itemId)) {
+        return prev.filter(id => id !== itemId);
+      } else {
+        return [...prev, itemId];
+      }
+    });
+  };
+  
+  const handleUpdateStatus = useCallback(async (status) => {
     try {
-      console.log(`Tentando atualizar agendamento ${id} para status ${status}`);
+      for (const id of selectedItems) {
       await updateAgendamentoStatus(id, status);
+      }
       await fetchAgendamentos();
-      onRefresh();
+      setSelectedItems([]);
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
-      if (error.response) {
-        console.error('Resposta do servidor:', error.response.data);
-      }
-      alert(`Erro ao atualizar status: ${error.message || 'Falha na requisição'}`);
     }
-  };
+  }, [selectedItems, fetchAgendamentos]);
   
-  const handleShowDetails = (agendamento) => {
-    console.log("Abrindo detalhes do agendamento:", agendamento.id);
-    setSelectedAgendamento(agendamento);
-  };
+  // 親コンポーネントから呼び出される関数
+  useEffect(() => {
+    if (onUpdateStatus) {
+      onUpdateStatus(handleUpdateStatus);
+    }
+  }, [handleUpdateStatus, onUpdateStatus]);
   
   const handleCloseDetails = () => {
     setSelectedAgendamento(null);
@@ -154,57 +176,42 @@ const ProcessingInvoicesList = ({ refresh, onRefresh }) => {
   };
   
   if (loading) {
-    return <p>Carregando...</p>;
+    return <div className="loading">Carregando...</div>;
+  }
+  
+  if (error) {
+    return <div className="error">{error}</div>;
   }
   
   return (
-    <div className="processing-invoices-list">
-      <h3>Notas em Processamento</h3>
-      <p className="sorting-info">Ordenado por data de recebimento (mais antiga primeiro)</p>
+    <div className="processing-invoices-container">
       {agendamentos.length === 0 ? (
         <p>Nenhuma nota em processamento</p>
       ) : (
-        <ul>
+        <ul className="agendamentos-list">
           {agendamentos.map(item => (
-            <li key={item.id} className={`status-${item.status.replace(/\s+/g, '-')}`}>
-              <div className="item-info">
-                <span className="status">{item.status}</span>
-                <span 
-                  className={`numero-nf clickable ${isNFHighlighted(item) ? 'highlighted-nf' : ''}`}
-                  onClick={() => handleShowDetails(item)}
-                >
-                  NF: {item.numeroNF || 'Sem NF'}
-                </span>
-                <span>Cliente: {item.cliente?.nome || 'Sem cliente'}</span>
-                <span className="data-recebimento">
-                  Recebido em: {getDataRecebimento(item.historicoStatus)}
-                </span>
+            <li 
+              key={item.id} 
+              className={`agendamento-item ${selectedItems.includes(item.id) ? 'selected' : ''}`}
+              data-status={item.status}
+            >
+              <div className="item-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item.id)}
+                  onChange={() => handleItemSelect(item.id)}
+                />
               </div>
-              <div className="item-actions">
-                {(item.status === 'recebido' || item.status === 'informado') && (
-                  <button onClick={() => handleUpdateStatus(item.id, 'informado')}
-                    className="status-button informado-button">
-                    Informado
-                  </button>
-                )}
-                
-                {(item.status === 'recebido' || item.status === 'informado') && (
-                  <button onClick={() => handleUpdateStatus(item.id, 'em tratativa')}>
-                    Em Tratativa
-                  </button>
-                )}
-                
-                {(item.status === 'recebido' || item.status === 'em tratativa' || item.status === 'informado') && (
-                  <button onClick={() => handleUpdateStatus(item.id, 'a paletizar')}>
-                    A Paletizar
-                  </button>
-                )}
-                
-                {item.status === 'paletizado' && (
-                  <button onClick={() => handleUpdateStatus(item.id, 'fechado')}>
-                    Finalizar
-                  </button>
-                )}
+              <div className="item-content" onClick={() => handleItemClick(item)}>
+                <div className="item-info">
+                  <span className="nf-number">NF: {item.numeroNF || 'Sem NF'}</span>
+                  <span className="cliente">{item.cliente?.nome || 'Sem cliente'}</span>
+                  <span className="volumes">Volumes: {item.volumes}</span>
+                  <span className="data-recebimento">Recebido: {getDataRecebimento(item.historicoStatus)}</span>
+                </div>
+                <div className="item-status">
+                  <span className="status">{item.status}</span>
+                </div>
               </div>
             </li>
           ))}

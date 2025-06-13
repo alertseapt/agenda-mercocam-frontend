@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getAgendamentos } from '../../services/api';
 import { formatarData, timestampToDate } from '../../utils/nfUtils';
+import InvoiceDetailsModal from '../administrativo/InvoiceDetailsModal';
 
 const TodaySchedulesList = ({ refresh }) => {
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedAgendamento, setSelectedAgendamento] = useState(null);
   
   useEffect(() => {
     fetchAgendamentos();
@@ -40,6 +42,14 @@ const TodaySchedulesList = ({ refresh }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleItemClick = (item) => {
+    setSelectedAgendamento(item);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedAgendamento(null);
   };
   
   if (loading) {
@@ -92,12 +102,26 @@ const TodaySchedulesList = ({ refresh }) => {
                 border: '1px solid #e0e0e0'
               }}
             >
-              <div>NF: {item.numeroNF}</div>
+              <div 
+                className="clickable" 
+                onClick={() => handleItemClick(item)}
+                style={{ cursor: 'pointer', color: '#007bff' }}
+              >
+                NF: {item.numeroNF}
+              </div>
               <div>{item.cliente.nome}</div>
               <div>VOL: {item.volumes}</div>
             </div>
           ))}
         </div>
+      )}
+      
+      {selectedAgendamento && (
+        <InvoiceDetailsModal
+          agendamento={selectedAgendamento}
+          onClose={handleCloseDetails}
+          onRefresh={fetchAgendamentos}
+        />
       )}
     </div>
   );

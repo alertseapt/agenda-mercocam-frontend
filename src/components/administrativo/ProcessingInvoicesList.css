@@ -1,0 +1,244 @@
+.processing-invoices-container {
+  padding: 0 20px 20px 20px; /* 上部のパディングを削除して固定バーとの重複を避ける */
+  margin-top: 40px; /* ステータス変更バーとの間により大きなスペースを追加 */
+  position: relative;
+}
+
+.fixed-menu {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  padding: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.menu-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.action-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.action-button:not(:disabled) {
+  background-color: #007bff;
+  color: white;
+}
+
+.action-button:disabled {
+  background-color: #e0e0e0;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.action-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.create-button {
+  background-color: #28a745 !important;
+}
+
+.create-button:hover:not(:disabled) {
+  background-color: #218838 !important;
+}
+
+.selection-info {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.agendamentos-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.agendamento-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px; /* パディングを少し減らしてコンパクトに */
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+/* ステータスに応じた色 */
+.agendamento-item[data-status="recebido"] {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-left: 4px solid #ffc107;
+}
+
+.agendamento-item[data-status="informado"] {
+  background-color: rgba(155, 89, 182, 0.1);
+  border-left: 4px solid #9b59b6;
+}
+
+.agendamento-item[data-status="em tratativa"] {
+  background-color: rgba(255, 87, 34, 0.1);
+  border-left: 4px solid #ff5722;
+}
+
+.agendamento-item[data-status="a paletizar"] {
+  background-color: rgba(33, 150, 243, 0.1);
+  border-left: 4px solid #2196f3;
+}
+
+.agendamento-item[data-status="paletizado"] {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left: 4px solid #4caf50;
+}
+
+.agendamento-item[data-status="fechado"] {
+  background-color: rgba(158, 158, 158, 0.1);
+  border-left: 4px solid #9e9e9e;
+}
+
+/* ホバーエフェクト */
+.agendamento-item:hover {
+  opacity: 0.8;
+  transform: translateX(5px);
+}
+
+.agendamento-item.selected {
+  opacity: 0.9;
+  transform: translateX(5px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.item-checkbox {
+  margin-right: 15px;
+}
+
+.item-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.item-content {
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between; /* 左側の情報と右側のステータスを分離 */
+  align-items: center;
+}
+
+.item-info {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* NF、顧客、ボリューム、受領日間のスペース */
+  flex: 1; /* 利用可能なスペースを占有 */
+}
+
+.item-status {
+  display: flex;
+  align-items: center;
+  margin-left: 20px; /* ステータスを右端に配置するためのマージン */
+}
+
+.nf-number {
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap; /* 改行しない */
+  min-width: 100px; /* NF番号の最小幅 */
+}
+
+.cliente {
+  color: #666;
+  font-size: 0.9em;
+  min-width: 150px; /* 顧客名の最小幅を設定 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 長い名前は省略記号で表示 */
+}
+
+.volumes {
+  color: #666;
+  font-size: 0.9em;
+  white-space: nowrap; /* 改行しない */
+  min-width: 80px; /* ボリューム情報の最小幅 */
+}
+
+.data-recebimento {
+  color: #666;
+  font-size: 0.9em;
+  white-space: nowrap; /* 改行しない */
+  min-width: 120px; /* 受領日の最小幅 */
+}
+
+.status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  background-color: #e0e0e0;
+  white-space: nowrap; /* 改行しない */
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 20px;
+  color: #dc3545;
+  background-color: #f8d7da;
+  border-radius: 4px;
+  margin: 20px 0;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .item-info {
+    gap: 8px; /* モバイルではスペースを少なくする */
+    flex-wrap: wrap; /* 必要に応じて改行 */
+  }
+  
+  .item-status {
+    margin-left: 10px;
+  }
+  
+  .nf-number {
+    font-size: 0.8em;
+    min-width: 70px; /* モバイルでは幅を狭く */
+  }
+  
+  .cliente {
+    min-width: 80px; /* モバイルでは幅を狭く */
+    font-size: 0.8em;
+  }
+  
+  .volumes {
+    font-size: 0.8em;
+    min-width: 60px;
+  }
+  
+  .data-recebimento {
+    font-size: 0.8em;
+    min-width: 90px; /* モバイルでは幅を狭く */
+  }
+  
+  .status {
+    padding: 2px 6px;
+    font-size: 0.8em;
+  }
+  
+  .agendamento-item {
+    padding: 8px 10px; /* モバイルではさらにコンパクトに */
+  }
+} 
