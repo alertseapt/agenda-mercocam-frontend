@@ -29,10 +29,10 @@ const OperacionalPage = () => {
         minHeight: 0 // Important for flex child to respect parent height
       }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <ToBePalletizedList refresh={refresh} onRefresh={handleRefresh} />
+          <TodaySchedulesList refresh={refresh} />
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <TodaySchedulesList refresh={refresh} />
+          <ToBePalletizedList refresh={refresh} onRefresh={handleRefresh} />
         </div>
       </div>
     </div>

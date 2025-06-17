@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { formatarData, formatarDataHora } from '../../utils/nfUtils';
 import { updateAgendamento, deleteAgendamento, getClientes, updateAgendamentoStatus } from '../../services/api';
+import PasswordModal from './PasswordModal';
 
 const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh, showStatusChange = false }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -15,6 +16,7 @@ const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh, showStatusChange
   const [mensagem, setMensagem] = useState('');
   const [clientes, setClientes] = useState([]);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   
   useEffect(() => {
     if (isEditing) {
@@ -113,6 +115,15 @@ const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh, showStatusChange
     }
   };
 
+  const handleEditClick = () => {
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordConfirm = () => {
+    setIsEditing(true);
+    setShowPasswordModal(false);
+  };
+
   console.log("Renderizando modal para agendamento:", agendamento.id);
   
   return (
@@ -124,7 +135,7 @@ const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh, showStatusChange
             {!isEditing ? (
               <button 
                 className="edit-button" 
-                onClick={() => setIsEditing(true)}
+                onClick={handleEditClick}
               >
                 Editar
               </button>
@@ -402,6 +413,12 @@ const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh, showStatusChange
           </div>
         </div>
       </div>
+      
+      <PasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onConfirm={handlePasswordConfirm}
+      />
     </div>
   );
 };
