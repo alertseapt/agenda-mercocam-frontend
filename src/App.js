@@ -1,32 +1,64 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
-import OperacionalPage from './pages/OperacionalPage';
+import StatusBar from './components/StatusBar';
 import AdministrativoPage from './pages/AdministrativoPage';
 import LeituraPage from './pages/LeituraPage';
-import './styles/App.css';
+import ClientesPage from './pages/ClientesPage';
+import './App.css';
 
 const AppContent = () => {
   const { ambiente } = useAuth();
-  
+  const [statusBarData, setStatusBarData] = useState({
+    selectedItems: [],
+    selectedAgendamentos: [],
+    onStatusUpdate: null,
+    isUpdatingStatus: false,
+    onCreateSchedule: null,
+    isCreatingSchedule: false
+  });
+
+  const updateStatusBarData = (data) => {
+    setStatusBarData(prev => ({ ...prev, ...data }));
+  };
+
   return (
-    <div className="app-container">
+    <div className="App">
       <Navbar />
-      <div className="content-container">
-        {ambiente === 'operacional' && <OperacionalPage />}
-        {ambiente === 'administrativo' && <AdministrativoPage />}
-        {ambiente === 'leitura' && <LeituraPage />}
+      {ambiente === 'administrativo' && (
+        <StatusBar 
+          selectedItems={statusBarData.selectedItems}
+          selectedAgendamentos={statusBarData.selectedAgendamentos}
+          onStatusUpdate={statusBarData.onStatusUpdate}
+          isUpdatingStatus={statusBarData.isUpdatingStatus}
+          onCreateSchedule={statusBarData.onCreateSchedule}
+          isCreatingSchedule={statusBarData.isCreatingSchedule}
+        />
+      )}
+      <div className={`content ${ambiente === 'administrativo' ? 'with-statusbar' : ''}`}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/administrativo" replace />} />
+          <Route 
+            path="/administrativo" 
+            element={<AdministrativoPage onUpdateStatusBar={updateStatusBarData} />} 
+          />
+          <Route path="/leitura" element={<LeituraPage />} />
+          <Route path="/clientes" element={<ClientesPage />} />
+        </Routes>
       </div>
     </div>
   );
 };
 
-const App = () => {
+function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <Router>
+        <AppContent />
+      </Router>
     </AuthProvider>
   );
-};
+}
 
 export default App;

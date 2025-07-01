@@ -4,8 +4,9 @@ import { formatarData } from '../../utils/nfUtils';
 import InvoiceDetailsModal from './InvoiceDetailsModal';
 import './ProcessingInvoicesList.css';
 
-const ProcessingInvoicesList = ({ refresh, onRefresh, onSelectionChange, onUpdateStatus }) => {
+const ProcessingInvoicesList = ({ refresh, onRefresh, onSelectionChange, onUpdateStatus, filters = null, onClearSelectionRef }) => {
   const [agendamentos, setAgendamentos] = useState([]);
+  const [filteredAgendamentos, setFilteredAgendamentos] = useState([]);
   const [selectedAgendamento, setSelectedAgendamento] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,16 +16,73 @@ const ProcessingInvoicesList = ({ refresh, onRefresh, onSelectionChange, onUpdat
     fetchAgendamentos();
   }, [refresh]);
   
+  // Effect para aplicar filtros quando agendamentos ou filtros mudarem
+  useEffect(() => {
+    console.log('useEffect: Aplicando filtros. Agendamentos:', agendamentos.length, 'Filtros:', filters);
+    
+    if (agendamentos.length > 0) {
+      let filtered = [...agendamentos];
+      
+      if (filters) {
+        // Cliente filter
+        if (filters.cliente) {
+          console.log('Filtrando por cliente:', filters.cliente);
+          filtered = filtered.filter(item => 
+            item.clienteId === filters.cliente || 
+            (item.cliente && item.cliente.id === filters.cliente)
+          );
+        }
+        
+        // Status filter
+        if (filters.status) {
+          console.log('Filtrando por status:', filters.status);
+          filtered = filtered.filter(item => item.status === filters.status);
+        }
+      }
+      
+      // Aplicar ordenação padrão por data de recebimento (mais antiga)
+      filtered.sort((a, b) => {
+        const getReceivedTimestamp = (item) => {
+          if (!item.historicoStatus || !Array.isArray(item.historicoStatus)) return null;
+          const recebido = item.historicoStatus.find(h => h.status === 'recebido');
+          return recebido ? recebido.timestamp : null;
+        };
+        
+        const timestampA = getReceivedTimestamp(a);
+        const timestampB = getReceivedTimestamp(b);
+        
+        if (!timestampA && !timestampB) return 0;
+        if (!timestampA) return 1;
+        if (!timestampB) return -1;
+        
+        const dateA = timestampToDate(timestampA);
+        const dateB = timestampToDate(timestampB);
+        
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        
+        return dateA.getTime() - dateB.getTime();
+      });
+      
+      console.log('Resultado do filtro:', filtered.length, 'itens');
+      setFilteredAgendamentos(filtered);
+    } else {
+      // Se não há agendamentos, limpa a lista filtrada
+      setFilteredAgendamentos([]);
+    }
+  }, [agendamentos, filters]);
+  
   useEffect(() => {
     // 選択された項目が変更されたときに親コンポーネントに通知
     if (onSelectionChange) {
       // 選択されたIDに対応するアジェンダの詳細情報を取得
-      const selectedAgendamentos = agendamentos.filter(agendamento => 
+      const selectedAgendamentos = filteredAgendamentos.filter(agendamento => 
         selectedItems.includes(agendamento.id)
       );
       onSelectionChange(selectedItems, selectedAgendamentos);
     }
-  }, [selectedItems, agendamentos]); // agendamentosも依存配列に追加
+  }, [selectedItems, filteredAgendamentos]); // filteredAgendamentosも依存配列に追加
   
   // Função auxiliar para converter timestamp para Date
   const timestampToDate = (timestamp) => {
@@ -109,6 +167,14 @@ const ProcessingInvoicesList = ({ refresh, onRefresh, onSelectionChange, onUpdat
       });
       
       setAgendamentos(sortedData);
+      // Debug: verificar estrutura dos dados
+      if (sortedData.length > 0) {
+        console.log('Exemplo de agendamento:', sortedData[0]);
+        console.log('Cliente do primeiro agendamento:', sortedData[0].cliente);
+        console.log('ClienteId do primeiro agendamento:', sortedData[0].clienteId);
+      }
+      // Sempre chama applyFilters após carregar os dados
+      // O applyFilters será chamado pelo useEffect automaticamente
       setError(null);
     } catch (err) {
       setError('Erro ao carregar agendamentos');
@@ -116,7 +182,7 @@ const ProcessingInvoicesList = ({ refresh, onRefresh, onSelectionChange, onUpdat
     } finally {
       setLoading(false);
     }
-  }, []); // 依存関係なし
+  }, []); // Remove filters da dependência - será gerenciado pelo useEffect
   
   const handleItemClick = (item) => {
     setSelectedAgendamento(item);
@@ -175,6 +241,17 @@ const ProcessingInvoicesList = ({ refresh, onRefresh, onSelectionChange, onUpdat
     return semVolume || semChaveAcesso;
   };
   
+  const clearSelection = () => {
+    setSelectedItems([]);
+  };
+  
+  // clearSelection関数を親コンポーネントに公開
+  useEffect(() => {
+    if (onClearSelectionRef) {
+      onClearSelectionRef(clearSelection);
+    }
+  }, [onClearSelectionRef]);
+  
   if (loading) {
     return <div className="loading">Carregando...</div>;
   }
@@ -185,11 +262,11 @@ const ProcessingInvoicesList = ({ refresh, onRefresh, onSelectionChange, onUpdat
   
   return (
     <div className="processing-invoices-container">
-      {agendamentos.length === 0 ? (
-        <p>Nenhuma nota em processamento</p>
+      {filteredAgendamentos.length === 0 ? (
+        <p>{agendamentos.length === 0 ? 'Nenhuma nota em processamento' : 'Nenhuma nota encontrada com os filtros aplicados'}</p>
       ) : (
         <ul className="agendamentos-list">
-          {agendamentos.map(item => (
+          {filteredAgendamentos.map(item => (
             <li 
               key={item.id} 
               className={`agendamento-item ${selectedItems.includes(item.id) ? 'selected' : ''}`}

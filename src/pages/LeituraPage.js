@@ -258,11 +258,9 @@ const LeituraPage = () => {
 
       {selectedAgendamento && (
         <InvoiceDetailsModal
-          isOpen={!!selectedAgendamento}
-          onClose={closeModal}
           agendamento={selectedAgendamento}
+          onClose={closeModal}
           onRefresh={fetchAgendamentos}
-          isLeitura={true}
           showStatusChange={true}
         />
       )}

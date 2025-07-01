@@ -1,0 +1,231 @@
+.schedules-list-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.schedules-table-wrapper {
+  overflow-x: auto;
+}
+
+.schedules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.schedules-table th {
+  background-color: #f8f9fa;
+  padding: 15px 12px;
+  text-align: left;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.schedules-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f3f4;
+  vertical-align: top;
+}
+
+.schedule-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.schedule-row:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Células específicas */
+.nf-cell {
+  min-width: 120px;
+}
+
+.nf-number {
+  display: block;
+  font-weight: 600;
+  color: #2c3e50;
+  font-family: 'Courier New', monospace;
+}
+
+.nf-key {
+  display: block;
+  font-size: 0.75rem;
+  color: #6c757d;
+  font-family: 'Courier New', monospace;
+  margin-top: 2px;
+}
+
+.cliente-cell {
+  min-width: 200px;
+}
+
+.cliente-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cliente-nome {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.cliente-cnpj {
+  font-size: 0.75rem;
+  color: #6c757d;
+  font-family: 'Courier New', monospace;
+}
+
+.data-cell {
+  min-width: 100px;
+  font-family: 'Courier New', monospace;
+}
+
+.previsao-badge {
+  background-color: #ffc107;
+  color: #212529;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.recebimento-cell {
+  min-width: 100px;
+  font-family: 'Courier New', monospace;
+}
+
+.volumes-cell {
+  text-align: center;
+  min-width: 80px;
+}
+
+.volumes-number {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.status-cell {
+  min-width: 120px;
+  text-align: center;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.observacoes-cell {
+  max-width: 200px;
+  word-wrap: break-word;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+/* Estados de carregamento e vazio */
+.schedules-loading {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
+}
+
+.schedules-loading .loading-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.schedules-empty {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
+  font-size: 1.1rem;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+  .schedules-table th,
+  .schedules-table td {
+    padding: 10px 8px;
+    font-size: 0.8rem;
+  }
+  
+  .cliente-cell {
+    min-width: 150px;
+  }
+  
+  .observacoes-cell {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 768px) {
+  .schedules-table-wrapper {
+    font-size: 0.8rem;
+  }
+  
+  .schedules-table th {
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
+  
+  .schedules-table td {
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
+  
+  .nf-cell,
+  .cliente-cell,
+  .data-cell,
+  .recebimento-cell {
+    min-width: auto;
+  }
+  
+  .volumes-cell,
+  .status-cell {
+    min-width: 60px;
+  }
+  
+  .observacoes-cell {
+    max-width: 100px;
+  }
+  
+  .status-badge {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+  
+  .previsao-badge {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+  }
+} 

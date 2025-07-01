@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import ScheduleCreationModal from '../components/administrativo/ScheduleCreationModal';
 import ProcessingInvoicesList from '../components/administrativo/ProcessingInvoicesList';
+import FilterControls from '../components/administrativo/FilterControls';
 import './AdministrativoPage.css';
 
-const AdministrativoPage = () => {
+const AdministrativoPage = ({ onUpdateStatusBar }) => {
   const [refresh, setRefresh] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -11,6 +12,8 @@ const AdministrativoPage = () => {
   const [updateStatusFunction, setUpdateStatusFunction] = useState(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isCreatingSchedule, setIsCreatingSchedule] = useState(false);
+  const [filters, setFilters] = useState(null);
+  const [clearSelectionFunction, setClearSelectionFunction] = useState(null);
   
   const handleRefresh = () => {
     setRefresh(prev => prev + 1);
@@ -28,10 +31,46 @@ const AdministrativoPage = () => {
   const handleSelectionChange = (items, agendamentos) => {
     setSelectedItems(items);
     setSelectedAgendamentos(agendamentos || []);
+    
+    // Atualizar StatusBar
+    if (onUpdateStatusBar) {
+      onUpdateStatusBar({
+        selectedItems: items,
+        selectedAgendamentos: agendamentos || [],
+        onCreateSchedule: handleCreateSchedule,
+        isCreatingSchedule: isCreatingSchedule
+      });
+    }
   };
 
   const handleUpdateStatusRef = (updateFunction) => {
     setUpdateStatusFunction(() => updateFunction);
+    
+    // Atualizar StatusBar com função de atualização
+    if (onUpdateStatusBar) {
+      onUpdateStatusBar({
+        onStatusUpdate: async (status) => {
+          if (updateFunction && !isUpdatingStatus) {
+            try {
+              setIsUpdatingStatus(true);
+              if (onUpdateStatusBar) {
+                onUpdateStatusBar({ isUpdatingStatus: true });
+              }
+              await updateFunction(status);
+            } catch (error) {
+              console.error('Erro ao atualizar status:', error);
+            } finally {
+              setIsUpdatingStatus(false);
+              if (onUpdateStatusBar) {
+                onUpdateStatusBar({ isUpdatingStatus: false });
+              }
+            }
+          }
+        },
+        onCreateSchedule: handleCreateSchedule,
+        isCreatingSchedule: isCreatingSchedule
+      });
+    }
   };
 
   const handleStatusUpdate = async (status) => {
@@ -50,6 +89,21 @@ const AdministrativoPage = () => {
   const handleCreateSchedule = () => {
     setIsCreatingSchedule(true);
     openModal();
+  };
+
+  const handleFilter = (filtros) => {
+    console.log('AdministrativoPage: Novos filtros recebidos:', filtros);
+    setFilters(filtros);
+  };
+
+  const handleClearSelection = () => {
+    if (clearSelectionFunction) {
+      clearSelectionFunction();
+    }
+  };
+
+  const handleClearSelectionRef = (clearFunction) => {
+    setClearSelectionFunction(() => clearFunction);
   };
 
   // 選択されたNF番号を表示するための関数
@@ -71,92 +125,16 @@ const AdministrativoPage = () => {
   
   return (
     <div className="page administrativo-page">
-      <div className="action-buttons">
-        <div className="buttons-group">
-          <button 
-            className="action-button informado"
-            onClick={() => handleStatusUpdate('informado')}
-            disabled={selectedItems.length === 0 || isUpdatingStatus}
-          >
-            {isUpdatingStatus ? (
-              <>
-                <span className="loading-spinner"></span>
-                Atualizando...
-              </>
-            ) : (
-              'Informado'
-            )}
-          </button>
-          <button 
-            className="action-button em-tratativa"
-            onClick={() => handleStatusUpdate('em tratativa')}
-            disabled={selectedItems.length === 0 || isUpdatingStatus}
-          >
-            {isUpdatingStatus ? (
-              <>
-                <span className="loading-spinner"></span>
-                Atualizando...
-              </>
-            ) : (
-              'Em Tratativa'
-            )}
-          </button>
-          <button 
-            className="action-button a-paletizar"
-            onClick={() => handleStatusUpdate('a paletizar')}
-            disabled={selectedItems.length === 0 || isUpdatingStatus}
-          >
-            {isUpdatingStatus ? (
-              <>
-                <span className="loading-spinner"></span>
-                Atualizando...
-              </>
-            ) : (
-              'A Paletizar'
-            )}
-          </button>
-          <button 
-            className="action-button finalizar"
-            onClick={() => handleStatusUpdate('fechado')}
-            disabled={selectedItems.length === 0 || isUpdatingStatus}
-          >
-            {isUpdatingStatus ? (
-              <>
-                <span className="loading-spinner"></span>
-                Finalizando...
-              </>
-            ) : (
-              'Finalizar'
-            )}
-          </button>
-          
-          {selectedItems.length > 0 && (
-            <span className="selection-info">
-              {getSelectedNFsDisplay()}
-            </span>
-          )}
-        </div>
-        
-        <button 
-          className="create-button" 
-          onClick={handleCreateSchedule}
-          disabled={isCreatingSchedule}
-        >
-          {isCreatingSchedule ? (
-            <>
-              <span className="loading-spinner"></span>
-              Criando...
-            </>
-          ) : (
-            'Criar Novo Agendamento'
-          )}
-        </button>
-      </div>
-      
       <ScheduleCreationModal 
         isOpen={isModalOpen}
         onClose={closeModal}
         onRefresh={handleRefresh}
+      />
+
+      <FilterControls 
+        onFilter={handleFilter} 
+        onClearSelection={handleClearSelection}
+        selectedCount={selectedItems.length}
       />
       
       <ProcessingInvoicesList 
@@ -164,6 +142,8 @@ const AdministrativoPage = () => {
         onRefresh={handleRefresh}
         onSelectionChange={handleSelectionChange}
         onUpdateStatus={handleUpdateStatusRef}
+        filters={filters}
+        onClearSelectionRef={handleClearSelectionRef}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const PasswordModal = ({ isOpen, onClose, onConfirm }) => {
+const PasswordModal = ({ onConfirm, onCancel, title = "Digite a senha para editar" }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -11,7 +11,6 @@ const PasswordModal = ({ isOpen, onClose, onConfirm }) => {
       onConfirm();
       setPassword('');
       setError('');
-      onClose();
     } else {
       setError('Senha incorreta');
       setPassword('');
@@ -21,16 +20,14 @@ const PasswordModal = ({ isOpen, onClose, onConfirm }) => {
   const handleCancel = () => {
     setPassword('');
     setError('');
-    onClose();
+    onCancel();
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" style={{ zIndex: 1001 }}>
       <div className="modal-content" style={{ maxWidth: '300px', padding: '20px' }}>
         <div className="modal-header">
-          <h3>Confirmação de Edição</h3>
+          <h3>{title}</h3>
           <button className="close-button" onClick={handleCancel}>×</button>
         </div>
         

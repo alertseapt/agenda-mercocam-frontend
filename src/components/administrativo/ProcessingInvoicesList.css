@@ -147,6 +147,8 @@
   display: flex;
   align-items: center;
   margin-left: 20px; /* ステータスを右端に配置するためのマージン */
+  min-width: 120px; /* 状態バッジの最小幅を確保 */
+  justify-content: flex-end; /* 右側に配置 */
 }
 
 .nf-number {
@@ -180,11 +182,72 @@
 }
 
 .status {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.9em;
-  background-color: #e0e0e0;
-  white-space: nowrap; /* 改行しない */
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* Cores específicas para cada status */
+.agendamento-item[data-status="recebido"] .status {
+  background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+}
+
+.agendamento-item[data-status="recebido"] .status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.agendamento-item[data-status="informado"] .status {
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+}
+
+.agendamento-item[data-status="informado"] .status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(155, 89, 182, 0.3);
+}
+
+.agendamento-item[data-status="em tratativa"] .status {
+  background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%);
+}
+
+.agendamento-item[data-status="em tratativa"] .status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 87, 34, 0.3);
+}
+
+.agendamento-item[data-status="a paletizar"] .status {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+}
+
+.agendamento-item[data-status="a paletizar"] .status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+}
+
+.agendamento-item[data-status="paletizado"] .status {
+  background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
+}
+
+.agendamento-item[data-status="paletizado"] .status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.agendamento-item[data-status="fechado"] .status {
+  background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+}
+
+.agendamento-item[data-status="fechado"] .status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(158, 158, 158, 0.3);
 }
 
 .loading {
@@ -211,6 +274,8 @@
   
   .item-status {
     margin-left: 10px;
+    min-width: 100px; /* モバイルでは幅を狭く */
+    justify-content: center; /* モバイルでは中央配置 */
   }
   
   .nf-number {
@@ -234,8 +299,9 @@
   }
   
   .status {
-    padding: 2px 6px;
-    font-size: 0.8em;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 12px;
   }
   
   .agendamento-item {

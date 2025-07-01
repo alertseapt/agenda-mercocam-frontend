@@ -1,34 +1,26 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext();
 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  }
+  return context;
+};
+
 export const AuthProvider = ({ children }) => {
-  const [ambiente, setAmbiente] = useState('operacional');
-  const [ambienteChanged, setAmbienteChanged] = useState(false);
-  
-  const changeAmbiente = (novoAmbiente) => {
-    // Se estiver mudando para o ambiente de leitura, sinaliza a mudança
-    if (novoAmbiente === 'leitura') {
-      setAmbienteChanged(true);
-    }
-    setAmbiente(novoAmbiente);
+  const [ambiente, setAmbiente] = useState('administrativo');
+
+  const value = {
+    ambiente,
+    setAmbiente
   };
-  
-  // Redefine o sinalizador após ele ser usado
-  const resetAmbienteChanged = () => {
-    setAmbienteChanged(false);
-  };
-  
+
   return (
-    <AuthContext.Provider value={{ 
-      ambiente, 
-      changeAmbiente, 
-      ambienteChanged, 
-      resetAmbienteChanged 
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getClientes, createAgendamento, updateAgendamentoStatus } from '../../services/api';
 import { extrairNumeroNF } from '../../utils/nfUtils';
+import '../administrativo/InvoiceDetailsModal.css';
 
 const ScheduleCreationModal = ({ isOpen, onClose, onRefresh }) => {
   const [input, setInput] = useState('');
@@ -46,14 +47,27 @@ const ScheduleCreationModal = ({ isOpen, onClose, onRefresh }) => {
   useEffect(() => {
     if (clienteSearch.trim() === '') {
       setFilteredClientes([]);
+      setShowSuggestions(false);
       return;
     }
     
     const lowerCaseSearch = clienteSearch.toLowerCase();
-    const filtered = clientes.filter(cliente => 
-      cliente.nome.toLowerCase().includes(lowerCaseSearch) ||
-      cliente.cnpj.toLowerCase().includes(lowerCaseSearch)
-    );
+    const filtered = clientes
+      .filter(cliente => 
+        cliente.nome.toLowerCase().includes(lowerCaseSearch) ||
+        cliente.cnpj.replace(/[^\d]/g, '').includes(lowerCaseSearch.replace(/[^\d]/g, ''))
+      )
+      .sort((a, b) => {
+        // Priorizar matches que começam com o termo de busca
+        const aStartsWithName = a.nome.toLowerCase().startsWith(lowerCaseSearch);
+        const bStartsWithName = b.nome.toLowerCase().startsWith(lowerCaseSearch);
+        
+        if (aStartsWithName && !bStartsWithName) return -1;
+        if (!aStartsWithName && bStartsWithName) return 1;
+        
+        return a.nome.localeCompare(b.nome);
+      })
+      .slice(0, 8); // Limitar a 8 resultados
     
     setFilteredClientes(filtered);
     setShowSuggestions(filtered.length > 0);
@@ -79,6 +93,7 @@ const ScheduleCreationModal = ({ isOpen, onClose, onRefresh }) => {
     setClienteSearch(cliente.nome);
     setClienteId(cliente.id);
     setShowSuggestions(false);
+    setFilteredClientes([]);
   };
   
   const handleSubmit = async (e) => {
@@ -155,38 +170,47 @@ const ScheduleCreationModal = ({ isOpen, onClose, onRefresh }) => {
   if (!isOpen) return null;
   
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h3>Criar Agendamento</h3>
-          <button className="close-button" onClick={onClose}>×</button>
+    <div className="invoice-modal-overlay">
+      <div className="invoice-modal-content">
+        <div className="invoice-modal-header">
+          <h3 className="invoice-modal-title">Criar Agendamento</h3>
+          <div className="invoice-modal-actions-header">
+            <button type="button" onClick={onClose} className="invoice-cancel-edit-button">
+              Cancelar
+            </button>
+            <button className="invoice-close-button" onClick={onClose}>×</button>
+          </div>
         </div>
         
-        <div className="modal-body">
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Número da NF ou Chave de Acesso</label>
+        <div className="invoice-modal-body">
+          <form onSubmit={handleSubmit} className="invoice-edit-form">
+            <div className="invoice-form-group">
+              <label className="invoice-form-label">Número da NF ou Chave de Acesso</label>
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 required
                 ref={inputRef}
+                className="invoice-form-input"
+                placeholder="Digite o número da NF ou chave de acesso"
               />
             </div>
             
-            <div className="form-group">
-              <label>Volumes</label>
+            <div className="invoice-form-group">
+              <label className="invoice-form-label">Volumes</label>
               <input
                 type="number"
                 value={volumes}
                 onChange={(e) => setVolumes(e.target.value)}
                 min="1"
+                className="invoice-form-input"
+                placeholder="Quantidade de volumes"
               />
             </div>
             
-            <div className="form-group autocomplete-container">
-              <label>Cliente</label>
+            <div className="invoice-form-group autocomplete-container">
+              <label className="invoice-form-label">Cliente</label>
               <input
                 type="text"
                 value={clienteSearch}
@@ -201,98 +225,105 @@ const ScheduleCreationModal = ({ isOpen, onClose, onRefresh }) => {
                     setShowSuggestions(true);
                   }
                 }}
+                onBlur={() => {
+                  // Delay para permitir o clique no item
+                  setTimeout(() => setShowSuggestions(false), 150);
+                }}
                 placeholder="Digite o nome ou CNPJ do cliente"
                 required
                 ref={clienteSearchRef}
+                className="invoice-form-input"
               />
               
-              {showSuggestions && (
-                <div className="suggestions" ref={suggestionsRef}>
+              {showSuggestions && filteredClientes.length > 0 && (
+                <div className="invoice-suggestions" ref={suggestionsRef}>
                   {filteredClientes.map(cliente => (
                     <div 
                       key={cliente.id} 
-                      className="suggestion-item"
+                      className="invoice-suggestion-item"
                       onClick={() => handleSelectCliente(cliente)}
+                      onMouseDown={(e) => e.preventDefault()} // Previne perda de foco
                     >
-                      <div className="suggestion-name">{cliente.nome}</div>
-                      <div className="suggestion-cnpj">{cliente.cnpj}</div>
+                      <div className="invoice-suggestion-name">{cliente.nome}</div>
+                      <div className="invoice-suggestion-cnpj">{cliente.cnpj}</div>
                     </div>
                   ))}
                 </div>
               )}
               
               {clienteId && clienteSearch && (
-                <div className="selected-cliente">
-                  Cliente selecionado: {clientes.find(c => c.id === clienteId)?.nome}
+                <div className="invoice-selected-cliente">
+                  ✓ Cliente selecionado: {clientes.find(c => c.id === clienteId)?.nome}
                 </div>
               )}
             </div>
             
-            <div className="form-group checkbox">
-              <label>
+            <div className="invoice-form-group">
+              <label className="invoice-form-label">
                 <input
                   type="checkbox"
                   checked={ePrevisao}
                   onChange={(e) => setEPrevisao(e.target.checked)}
+                  style={{ marginRight: '8px' }}
                 />
                 É previsão (sem data específica)
               </label>
             </div>
             
             {!ePrevisao && (
-              <div className="form-group">
-                <label>Data</label>
+              <div className="invoice-form-group">
+                <label className="invoice-form-label">Data</label>
                 <input
                   type="date"
                   value={data}
                   onChange={(e) => setData(e.target.value)}
                   required={!ePrevisao}
+                  className="invoice-form-input"
                 />
               </div>
             )}
             
-            <div className="form-group">
-              <label>Observações</label>
+            <div className="invoice-form-group">
+              <label className="invoice-form-label">Observações</label>
               <textarea
                 value={observacoes}
                 onChange={(e) => setObservacoes(e.target.value)}
                 rows="3"
+                placeholder="Observações adicionais (opcional)"
+                className="invoice-form-textarea"
               />
             </div>
             
-            <div className="form-group" style={{marginTop: "15px", marginBottom: "15px"}}>
-              <div style={{display: "flex", alignItems: "center"}}>
+            <div className="invoice-form-group" style={{marginTop: "15px", marginBottom: "15px"}}>
+              <label className="invoice-form-label">
                 <input
                   type="checkbox"
                   id="marcarRecebido"
                   checked={marcarRecebido}
                   onChange={(e) => setMarcarRecebido(e.target.checked)}
-                  style={{width: "auto", marginRight: "10px"}}
+                  style={{ marginRight: '8px' }}
                 />
-                <label htmlFor="marcarRecebido">
-                  Marcar como recebido automaticamente
-                </label>
-              </div>
+                Marcar como recebido automaticamente
+              </label>
             </div>
             
-            <div className="modal-actions">
-              <button type="button" onClick={onClose} className="cancel-button">
-                Cancelar
-              </button>
-              <button type="submit" disabled={loading} className="confirm-button">
-                {loading ? (
-                  <>
-                    <span className="loading-spinner"></span>
-                    Criando...
-                  </>
-                ) : (
-                  'Criar Agendamento'
-                )}
-              </button>
-            </div>
+            <button type="submit" disabled={loading} className="invoice-save-button">
+              {loading ? (
+                <>
+                  <span className="invoice-loading-spinner"></span>
+                  Criando...
+                </>
+              ) : (
+                'Criar Agendamento'
+              )}
+            </button>
           </form>
           
-          {mensagem && <p className="mensagem">{mensagem}</p>}
+          {mensagem && (
+            <p className={`invoice-message ${mensagem.includes('sucesso') || mensagem.includes('recebido') ? 'success' : 'error'}`}>
+              {mensagem}
+            </p>
+          )}
         </div>
       </div>
     </div>

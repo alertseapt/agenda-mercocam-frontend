@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://logistica-app-production.up.railway.app/api'
+  baseURL: process.env.REACT_APP_API_URL || 'https://agenda-mercocamp-backend-production.up.railway.app/api'
 });
 
 export const getAgendamentos = async (filters = {}) => {
