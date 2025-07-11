@@ -318,11 +318,11 @@ const InvoiceDetailsModal = ({ agendamento, onClose, onRefresh, showStatusChange
 
               {!editedData.ePrevisao && (
                 <div className="invoice-form-group">
-                  <label className="invoice-form-label">Data do Agendamento:</label>
+                  <label className="invoice-form-label">Data de Agendamento:</label>
                   <input
                     type="date"
                     name="data"
-                    value={formatDateForInput(editedData.data) || ''}
+                    value={formatDateForInput(editedData.data)}
                     onChange={handleInputChange}
                     className="invoice-form-input"
                   />
